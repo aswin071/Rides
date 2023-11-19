@@ -71,6 +71,9 @@ class RideStatusUpdateView(APIView):
 
 
 class DriverRideAcceptView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    
     def put(self, request, ride_id):
         try:
 
