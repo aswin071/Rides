@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Ride
+from .models import Ride,Driver
 from .serializers import RideSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -50,7 +50,7 @@ class RideListView(APIView):
 
 
 class RideStatusUpdateView(APIView):
-    
+
     permission_classes = [IsAuthenticated]
 
     def put(self, request, ride_id):
@@ -66,5 +66,25 @@ class RideStatusUpdateView(APIView):
 
             serializer = RideSerializer(ride)
             return Response(serializer.data)
+        except Ride.DoesNotExist:
+            return Response({"message": "Ride not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class DriverRideAcceptView(APIView):
+    def put(self, request, ride_id):
+        try:
+
+            driver_id = request.user.id 
+            ride = Ride.objects.get(pk=ride_id)
+            driver_request = DriverRideRequest.objects.filter(driver_id=driver_id, ride_id=ride_id).first()
+            
+            if driver_request:
+                driver_request.accepted = True
+                driver_request.save()
+                ride.driver_accepted = True
+                ride.save()
+                return Response({"message": "Ride request accepted"})
+            else:
+                return Response({"message": "No ride request found"}, status=status.HTTP_404_NOT_FOUND)
         except Ride.DoesNotExist:
             return Response({"message": "Ride not found"}, status=status.HTTP_404_NOT_FOUND)
