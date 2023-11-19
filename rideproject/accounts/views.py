@@ -11,6 +11,7 @@ from .models import Account
 
 class RegisterView(APIView):
     def post(self,request):
+        print(request.data)
         serializer=UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -19,12 +20,13 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        
-        if 'email' not in request.data or 'password' not in request.data:
+        data = request.data 
+
+        if 'email' not in data or 'password' not in data:
             raise AuthenticationFailed('Please provide both email and password.')
 
-        email = request.data['email']
-        password = request.data['password']
+        email = data['email']
+        password = data['password']
 
         try:
             user = Account.objects.get(email=email)
@@ -45,12 +47,13 @@ class LoginView(APIView):
         # Create JWT token
         token = jwt.encode(payload, 'secret', algorithm='HS256')
 
-        response =Response()
+        # Set JWT token in the response cookie
+        response = Response()
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {'jwt': token}
 
-        response.set_cookie(key='jwt',value=token,httponly=True)
-        response.data={
-            'jwt': token}
         return response
+
 
 class LogoutView(APIView):
 
