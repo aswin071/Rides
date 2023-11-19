@@ -39,7 +39,7 @@ class RideDetailView(APIView):
 class RideListView(APIView):
 
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         try:
             rides = Ride.objects.all()
@@ -47,3 +47,24 @@ class RideListView(APIView):
             return Response(serializer.data)
         except Exception as e:
             return Response({"message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RideStatusUpdateView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, ride_id):
+        try:
+            ride = Ride.objects.get(pk=ride_id)
+            new_status = request.data.get('status')
+
+            if new_status not in ['started', 'completed', 'cancelled']:
+                return Response({"message": "Invalid status provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+            ride.status = new_status
+            ride.save()
+
+            serializer = RideSerializer(ride)
+            return Response(serializer.data)
+        except Ride.DoesNotExist:
+            return Response({"message": "Ride not found"}, status=status.HTTP_404_NOT_FOUND)
